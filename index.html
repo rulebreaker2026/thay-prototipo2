@@ -1240,6 +1240,7 @@ footer {
 var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var isMobile = window.matchMedia('(max-width: 768px)').matches;
 var isCoarse = window.matchMedia('(pointer: coarse)').matches;
+var isTikTok = /BytedanceWebview|musical_ly/.test(navigator.userAgent);
 
 /* ══ 1. CANVAS PARTICLES ══ */
 var canvas = document.getElementById('particle-canvas');
@@ -1340,6 +1341,17 @@ function tick(ts){
 }
 if(prefersReduced){ el.textContent = '2.8K'; }
 else { setTimeout(function(){ requestAnimationFrame(tick); }, 4200); }
+
+/* ══ 3-pre. TIKTOK IAB — força abertura em browser externo ══ */
+if(isTikTok){
+  document.querySelectorAll('a.card').forEach(function(card){
+    var href = card.getAttribute('href');
+    if(href && href !== '#'){
+      card.setAttribute('target', '_blank');
+      card.setAttribute('rel', 'noopener noreferrer');
+    }
+  });
+}
 
 /* ══ 3. SPOTLIGHT + RIPPLE ══ */
 document.querySelectorAll('.card').forEach(function(card){
@@ -1442,12 +1454,14 @@ if(!prefersReduced){
   }
   if(typeof DeviceOrientationEvent !== 'undefined'){
     if(typeof DeviceOrientationEvent.requestPermission === 'function'){
-      document.addEventListener('touchstart', function askP(){
-        DeviceOrientationEvent.requestPermission()
-          .then(function(s){ if(s === 'granted') startGyro(); })
-          .catch(function(){});
-        document.removeEventListener('touchstart', askP);
-      }, { once: true, passive: true });
+      if(!isTikTok){
+        document.addEventListener('touchstart', function askP(){
+          DeviceOrientationEvent.requestPermission()
+            .then(function(s){ if(s === 'granted') startGyro(); })
+            .catch(function(){});
+          document.removeEventListener('touchstart', askP);
+        }, { once: true, passive: true });
+      }
     } else { startGyro(); }
   }
 }
@@ -1501,6 +1515,7 @@ function spawnAvos(cx, cy, n){
 }
 
 document.addEventListener('touchstart', function(e){
+  if(isTikTok) return;
   var t = e.changedTouches[0];
   spawnAvos(t.clientX, t.clientY, 6);
 }, { passive: true });
@@ -1509,6 +1524,13 @@ document.addEventListener('mousedown', function(e){
   if(e.button !== 0) return;
   spawnAvos(e.clientX, e.clientY, 5);
 });
+
+/* ══ 8. LIBERA will-change após animações dos cards (~4.32s + 1.1s) ══ */
+setTimeout(function(){
+  document.querySelectorAll('.card').forEach(function(c){
+    c.style.willChange = 'auto';
+  });
+}, 5500);
 
 })();
 </script>
