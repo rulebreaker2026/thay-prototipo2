@@ -1240,7 +1240,6 @@ footer {
 var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var isMobile = window.matchMedia('(max-width: 768px)').matches;
 var isCoarse = window.matchMedia('(pointer: coarse)').matches;
-var isTikTok = /BytedanceWebview|musical_ly|aweme/i.test(navigator.userAgent);
 
 /* ══ 1. CANVAS PARTICLES ══ */
 var canvas = document.getElementById('particle-canvas');
@@ -1443,12 +1442,13 @@ if(!prefersReduced){
   }
   if(typeof DeviceOrientationEvent !== 'undefined'){
     if(typeof DeviceOrientationEvent.requestPermission === 'function'){
-      document.addEventListener('touchstart', function askP(){
+      document.addEventListener('touchstart', function askP(e){
+        if(e.target.closest('a, button')) return;
         DeviceOrientationEvent.requestPermission()
           .then(function(s){ if(s === 'granted') startGyro(); })
           .catch(function(){});
         document.removeEventListener('touchstart', askP);
-      }, { once: true, passive: true });
+      }, { passive: true });
     } else { startGyro(); }
   }
 }
